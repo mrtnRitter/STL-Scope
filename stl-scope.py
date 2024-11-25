@@ -57,12 +57,17 @@ tti_block = {
 
 tti_blocks = []
 
+stlfile = "Testfile/test.stl"
+
 
 # ------------- FUNCTIONS ------------- #
 
-with open ("Testfile/test.stl", "rb") as file:
+with open (stlfile, "rb") as file:
+    codepage = "cp" + file.read(gsi_readmap[0]).decode("ascii")
+
+with open (stlfile, "rb") as file:
     for byte, key in enumerate(gsi_block):
-        val = file.read(gsi_readmap[byte]).decode("utf8")
+        val = file.read(gsi_readmap[byte]).decode(codepage)
         
         if val.isspace():
             val = "Undefined"
@@ -70,23 +75,23 @@ with open ("Testfile/test.stl", "rb") as file:
         val = val.strip()
 
         if key == "Code Page Number":
-            val += " " + res.struct_cpn[val]
+            val += " [" + res.struct_cpn[val] + "]"
 
         if key == "Disk Format Code":
-            val += " " + res.struct_dfc[val]
+            val += " [" + res.struct_dfc[val] + "]"
 
         if key == "Display Standard Code":
             if val != "Undefined":
                 val += " " + res.struct_dsc[int(val)]
 
         if key == "Character Code Table":
-            val += " " + res.struct_cct[int(val)]
+            val += " [" + res.struct_cct[int(val)] + "]"
 
         if key == "Language Code":
-            val += " " + res.struct_lc[int(val, 16)]
+            val += " [" + res.struct_lc[int(val, 16)] + "]"
 
         if key == "Creation Date" or key == "Revision Date":
-            val += " " + val[4:6] + "." + val[2:4] + "." + val[0:2]
+            val += " [" + val[4:6] + "." + val[2:4] + "." + val[0:2] + "]"
 
         if key == "Revision number" or key == "Total Number of TTI blocks" or key == "Total Number of subtitles" or key == "Total Number of subtitle groups":
             val = str(int(val))
@@ -95,7 +100,7 @@ with open ("Testfile/test.stl", "rb") as file:
             val = int(val)
 
         if key == "TC Status":
-            val += " " + res.struct_tcs[int(val)]
+            val += " [" + res.struct_tcs[int(val)] + "]"
 
         if key == "TC Start" or key == "TC First In-Cue":
             val = val[0:2] + ":" + val[2:4] + ":" + val[4:6] + ":" + val[6:8] 
@@ -107,7 +112,8 @@ with open ("Testfile/test.stl", "rb") as file:
 
     print("--------------------------------------------------")
 
-    for tti in range(gsi_block["Total Number of TTI blocks"]):
+   # for tti in range(gsi_block["Total Number of TTI blocks"]):
+    for tti in range(1):
         for byte, key in enumerate(tti_block):
             val = file.read(tti_readmap[byte]).hex()
 
@@ -117,16 +123,40 @@ with open ("Testfile/test.stl", "rb") as file:
             if key == "Subtitle Number":
                 val = str(int(val[2:4], 16) + int(val[0:2], 16) + 1)
 
+            if key == "Extension Block Number":
+                if val == "fe":
+                    val += " [User Data]"
+                if val == "ff":
+                    val += " [None or End]"
+
+            if key == "Cumulative Status":
+                val += " [" + res.struct_cs[int(val)] + "]"
+
             if key == "Time Code In" or key == "Time Code Out":
                 val = str(int(val[0:2], 16)).zfill(2) + ":" + str(int(val[2:4], 16)).zfill(2) + ":" + str(int(val[4:6], 16)).zfill(2) + ":" + str(int(val[6:8], 16)).zfill(2)
 
             if key == "Vertical Position":
                 val = int(val, 16)
 
+            if key == "Justification Code":
+                val += " [" + res.struct_jc[int(val)] + "]"
+
+            if key == "Comment Flag":
+                val += " [" + res.struct_cf[int(val)] + "]"
+
+            if key == "Text Field":
+                val = val.upper()
+                cleartxt = "\n--------------------------------------------------\n"
+                for bytes in [val[i:i+2] for i in range (0, len(val), 2)]:
+                    cleartxt += res.struct_iso_6937_2[bytes]
+                    val = cleartxt
+
             tti_block[key] = val
 
         tti_blocks.append(tti_block.copy())
 
     for tti_block in tti_blocks:
-        print(tti_block)
+        for key in tti_block:
+            print (key + " : " + str(tti_block[key]))
+
 
