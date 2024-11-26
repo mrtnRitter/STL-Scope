@@ -112,8 +112,7 @@ with open (stlfile, "rb") as file:
 
     print("--------------------------------------------------")
 
-   # for tti in range(gsi_block["Total Number of TTI blocks"]):
-    for tti in range(1):
+    for tti in range(gsi_block["Total Number of TTI blocks"]):
         for byte, key in enumerate(tti_block):
             val = file.read(tti_readmap[byte]).hex()
 
@@ -146,10 +145,10 @@ with open (stlfile, "rb") as file:
 
             if key == "Text Field":
                 val = val.upper()
-                cleartxt = "\n--------------------------------------------------\n"
+                val_decoded = "\n--------------------------------------------------\n"
                 for bytes in [val[i:i+2] for i in range (0, len(val), 2)]:
-                    cleartxt += res.struct_iso_6937_2[bytes]
-                    val = cleartxt
+                    val_decoded += res.struct_iso_6937_2[bytes]
+                    val = val_decoded
 
             tti_block[key] = val
 
